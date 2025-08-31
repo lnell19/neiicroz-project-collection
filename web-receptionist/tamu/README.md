@@ -1,1 +1,1 @@
-# Source Code dan Database Halaman Tamu
+# Source Code Halaman Tamu
