@@ -1,1 +1,1 @@
-# Source Code dan Database Halaman Admin
+# Source Code Halaman Admin
