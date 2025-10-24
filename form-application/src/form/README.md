@@ -1,2 +1,2 @@
-# Form Class
-form class adalah framenya form
+# Form
+framenya form
