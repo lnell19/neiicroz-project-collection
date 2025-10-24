@@ -1,0 +1,2 @@
+# nbproject
+projek default neatbeans
