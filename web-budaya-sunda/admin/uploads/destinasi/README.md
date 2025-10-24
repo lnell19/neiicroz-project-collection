@@ -1,0 +1,1 @@
+# Tempat menyimpan gambar destinasi
