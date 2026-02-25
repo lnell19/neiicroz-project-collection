@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>School Quest</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- AUDIO -->
+  <audio id="backgroundMusic" loop>
+    <source src="music.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="gameOverSound">
+    <source src="over.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="rewardSound">
+    <source src="win.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="wrongSound">
+    <source src="x.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- INTRO -->
+  <div id="introScreen">
+    <div id="introOverlay"></div>
+    <div id="introTitle">School Quest</div>
+    
+    <div class="name-inputs">
+      <div class="name-input-group">
+        <label for="player1Name">Player 1</label>
+        <input type="text" id="player1Name" value="Player 1" maxlength="12">
+      </div>
+      <div class="name-input-group">
+        <label for="player2Name">Player 2</label>
+        <input type="text" id="player2Name" value="Player 2" maxlength="12">
+      </div>
+    </div>
+
+    <!-- KATEGORI PILIHAN -->
+    <div class="category-selection">
+      <h3>Pilih Kategori Soal:</h3>
+      <div class="categories">
+        <label class="category-item">
+          <input type="radio" name="category" value="semua" checked>
+          <span>🎲 Semua Soal</span>
+        </label>
+        <label class="category-item">
+          <input type="radio" name="category" value="umum">
+          <span>🌍 Umum</span>
+        </label>
+        <label class="category-item">
+          <input type="radio" name="category" value="bahasa_indonesia">
+          <span>📖 Bahasa Indonesia</span>
+        </label>
+        <label class="category-item">
+          <input type="radio" name="category" value="matematika">
+          <span>➗ Matematika</span>
+        </label>
+        <label class="category-item">
+          <input type="radio" name="category" value="bahasa_inggris">
+          <span>🔤 Bahasa Inggris</span>
+        </label>
+        <label class="category-item">
+          <input type="radio" name="category" value="kimia">
+          <span>🧪 Kimia</span>
+        </label>
+        <label class="category-item">
+          <input type="radio" name="category" value="fisika">
+          <span>⚡ Fisika</span>
+        </label>
+        <label class="category-item">
+          <input type="radio" name="category" value="astronomi">
+          <span>🪐 Astronomi</span>
+        </label>
+        <label class="category-item">
+          <input type="radio" name="category" value="biologi">
+          <span>🧬 Biologi</span>
+        </label>
+        <label class="category-item">
+          <input type="radio" name="category" value="sejarah_indonesia">
+          <span>📜 Sejarah Indonesia</span>
+        </label>
+        <label class="category-item">
+          <input type="radio" name="category" value="sosial">
+          <span>🗺️ Sosial</span>
+        </label>
+        <label class="category-item">
+          <input type="radio" name="category" value="olahraga">
+          <span>⚽ Olahraga</span>
+        </label>
+      </div>
+    </div>
+
+    <button id="startButton">Mulai Game</button>
+  </div>
+
+  <!-- COUNTDOWN OVERLAY -->
+  <div id="countdownOverlay">
+    <div id="countdownText">Siap...</div>
+  </div>
+
+  <!-- GAME -->
+  <div id="game-container">
+    <button id="pauseButton">⏸️</button>
+    
+    <div id="timerDisplay">Waktu: 1:00</div>
+    <div class="scores">
+      <div><span id="player1Label">Player 1</span>: <span id="score1">0</span></div>
+      <div><span id="player2Label">Player 2</span>: <span id="score2">0</span></div>
+    </div>
+
+    <div id="character1" class="character"></div>
+    <div id="character2" class="character"></div>
+
+    <div id="activeQuestion">
+      <div class="question-text" id="questionText"></div>
+      <div class="options" id="questionOptions"></div>
+    </div>
+
+    <!-- Badge Kategori Aktif -->
+    <div id="categoryBadge"></div>
+
+    <!-- PAUSE OVERLAY -->
+    <div id="pauseOverlay">
+      <div id="pauseMenu">
+        <h2>PAUSED</h2>
+        <button id="resumeButton">Lanjutkan</button>
+        
+        <div class="pause-option">
+          <label for="soundToggle">Efek Suara:</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="soundToggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="pause-option">
+          <label for="musicToggle">Musik Latar:</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="musicToggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <button id="showControlsButton">Lihat Kontrol</button>
+        <button id="mainMenuButton">Menu Utama</button>
+      </div>
+      
+      <div id="controlsDisplay">
+        <h3>Kontrol Permainan</h3>
+        <div class="controls-section">
+          <h4>Keyboard</h4>
+          <div class="control-row">
+            <div class="control-key">Shift Kiri</div>
+            <div class="control-desc">Angkat tangan (Pemain 1)</div>
+          </div>
+          <div class="control-row">
+            <div class="control-key">A, S, D</div>
+            <div class="control-desc">Jawab A, B, C (Pemain 1)</div>
+          </div>
+          <div class="control-row">
+            <div class="control-key">Shift Kanan</div>
+            <div class="control-desc">Angkat tangan (Pemain 2)</div>
+          </div>
+          <div class="control-row">
+            <div class="control-key">J, K, L</div>
+            <div class="control-desc">Jawab A, B, C (Pemain 2)</div>
+          </div>
+          <div class="control-row">
+            <div class="control-key">Spasi</div>
+            <div class="control-desc">Lewati pertanyaan</div>
+          </div>
+          <div class="control-row">
+            <div class="control-key">ESC</div>
+            <div class="control-desc">Pause game</div>
+          </div>
+        </div>
+        
+        <div class="controls-section">
+          <h4>Gamepad (Dual Joystick)</h4>
+          <div class="control-row">
+            <div class="control-key">Joystick 1 - Tombol A</div>
+            <div class="control-desc">Angkat tangan (Pemain 1)</div>
+          </div>
+          <div class="control-row">
+            <div class="control-key">Joystick 1 - X, Y, B</div>
+            <div class="control-desc">Jawab A, B, C (Pemain 1)</div>
+          </div>
+          <div class="control-row">
+            <div class="control-key">Joystick 1 - LB</div>
+            <div class="control-desc">Lewati pertanyaan (Pemain 1)</div>
+          </div>
+          <div class="control-row">
+            <div class="control-key">Joystick 2 - Tombol A</div>
+            <div class="control-desc">Angkat tangan (Pemain 2)</div>
+          </div>
+          <div class="control-row">
+            <div class="control-key">Joystick 2 - X, Y, B</div>
+            <div class="control-desc">Jawab A, B, C (Pemain 2)</div>
+          </div>
+          <div class="control-row">
+            <div class="control-key">Joystick 2 - RB</div>
+            <div class="control-desc">Lewati pertanyaan (Pemain 2)</div>
+          </div>
+        </div>
+        
+        <button id="backFromControls">Kembali</button>
+      </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="rewardModal">
+      <h2>🏆 REWARD!</h2>
+      <p id="rewardText"></p>
+      <button id="closeReward">Tutup</button>
+    </div>
+
+    <div id="timeUpModal">
+      <h2>⏰ WAKTU HABIS!</h2>
+      <p id="finalScoreText"></p>
+      <button id="closeTimeUp">Tutup</button>
+    </div>
+
+    <!-- AUTO-CLOSE FEEDBACK MODAL -->
+<div id="autoFeedbackModal" class="modal">
+  <div class="modal-content">
+    <h2 id="autoFeedbackTitle"></h2>
+    <p id="autoFeedbackMessage"></p>
+  </div>
+</div>
+
+    <!-- FEEDBACK OVERLAY -->
+    <div id="feedbackOverlay"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
