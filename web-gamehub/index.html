@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang='id'>
+<head>
+  <meta charset='UTF-8' />
+  <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+  <title>GameHub — Your Ultimate Gaming Universe</title>
+  <link rel='stylesheet' href='style.css' />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+  <!-- ===== NAVBAR ===== -->
+  <nav class='navbar' id='navbar'>
+    <div class='nav-container'>
+      <a href='#' class='logo'>
+        <span class='logo-icon'>◈</span>
+        <span class='logo-text'>GAME<span class='logo-accent'>HUB</span></span>
+      </a>
+      <ul class='nav-links' id='navLinks'>
+        <li><a href='#home' class='nav-link active'>Home</a></li>
+        <li><a href='#categories' class='nav-link'>Categories</a></li>
+        <li><a href='#popular' class='nav-link'>Popular</a></li>
+        <li><a href='#newrelease' class='nav-link'>New Release</a></li>
+        <li><a href='#about' class='nav-link'>About</a></li>
+      </ul>
+      <div class='nav-right'>
+        <div class='search-wrapper'>
+          <input type='text' id='searchInput'
+                 class='search-input' placeholder='Search games...' />
+          <span class='search-icon'>⌕</span>
+        </div>
+        <button class='hamburger' id='hamburger' aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <section class='hero' id='home'>
+    <div class='hero-grid-bg'></div>
+    <div class='hero-content fade-in'>
+      <div class='hero-badge'>🎮 NEW RELEASES AVAILABLE</div>
+      <h1 class='hero-title'>
+        Your Ultimate<br/>
+        <span class='hero-title-accent'>Gaming Universe</span>
+      </h1>
+      <p class='hero-desc'>
+        Discover, play, and master thousands of games.
+      </p>
+      <div class='hero-cta'>
+        <a href='#popular' class='btn-primary'>Explore Games</a>
+        <a href='#about' class='btn-secondary'>Learn More</a>
+      </div>
+      <div class='hero-stats'>
+        <div class='stat'>
+          <span class='stat-num' id='statGames'>...</span>
+          <span class='stat-label'>Games</span>
+        </div>
+        <div class='stat-divider'></div>
+        <div class='stat'>
+          <span class='stat-num'>4.8M</span>
+          <span class='stat-label'>Players</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FILTER TABS ===== -->
+  <section class='categories-section' id='categories'>
+    <div class='section-container'>
+      <h2 class='section-title'>Browse by Genre</h2>
+      <div class='filter-tabs' id='filterTabs'>
+        <button class='filter-btn active' data-filter='all'>All</button>
+        <button class='filter-btn' data-filter='action'>⚔ Action</button>
+        <button class='filter-btn' data-filter='rpg'>🗡 RPG</button>
+        <button class='filter-btn' data-filter='horror'>💀 Horror</button>
+        <button class='filter-btn' data-filter='pixel'>🎮 Pixel</button>
+        <button class='filter-btn' data-filter='multiplayer'>👥 Multi</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== POPULAR GAME GRID ===== -->
+  <section class='games-section' id='popular'>
+    <div class='section-container'>
+      <h2 class='section-title'>Popular Games</h2>
+      <div id='loadingState' class='loading-state'>
+        <div class='loading-spinner'></div>
+        <p>⏳ Memuat data dari database...</p>
+      </div>
+      <div id='noResults' class='no-results' style='display:none'>
+        <p>🎮 Game tidak ditemukan.</p>
+      </div>
+      <div class='games-grid' id='gamesGrid'></div>
+    </div>
+  </section>
+
+  <!-- ===== NEW RELEASE SECTION ===== -->
+  <section class='games-section' id='newrelease'>
+    <div class='section-container'>
+      <h2 class='section-title'>New Releases <span class='new-badge-title'>NEW</span></h2>
+      <div class='games-grid' id='newReleaseGrid'></div>
+      <div id='noNewRelease' class='no-results' style='display:none'>
+        <p>🎮 Belum ada game baru.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ABOUT ===== -->
+  <section class='about-section' id='about'>
+    <div class='section-container'>
+      <h2 class='section-title'>About <span class='logo-accent'>GameHub</span></h2>
+      <p class='about-desc'>GameHub adalah platform penemuan game terbaik. Kami mengkurasi ribuan game dari berbagai genre, menyajikannya dengan ulasan jujur dan komunitas yang hidup. Temukan game favoritmu berikutnya di sini.</p>
+      <div class='about-grid'>
+        <div class='about-card'>
+          <span class='about-icon'>🎮</span>
+          <h3>Ribuan Game</h3>
+          <p>Koleksi game dari berbagai platform dan genre, selalu diperbarui.</p>
+        </div>
+        <div class='about-card'>
+          <span class='about-icon'>⭐</span>
+          <h3>Rating Jujur</h3>
+          <p>Rating dari komunitas nyata, bukan bot atau sponsor.</p>
+        </div>
+        <div class='about-card'>
+          <span class='about-icon'>🚀</span>
+          <h3>Selalu Update</h3>
+          <p>New release terbaru langsung tersedia setelah diluncurkan.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MODAL ===== -->
+  <div class='modal-overlay' id='modalOverlay'>
+    <div class='modal' id='modal'>
+      <button class='modal-close' id='modalClose'>✕</button>
+      <div class='modal-content' id='modalContent'></div>
+    </div>
+  </div>
+
+  <script src='script.js'></script>
+</body>
+</html>

@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameHub — Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    /* ── Variables (same as GameHub) ── */
+    :root {
+      --bg-primary:     #060e0c;
+      --bg-secondary:   #0a1510;
+      --bg-card:        #0d1c18;
+      --bg-card-hover:  #112219;
+      --accent:         #00ff88;
+      --accent-dim:     #00cc6a;
+      --accent-danger:  #ff4466;
+      --accent-warn:    #ffaa00;
+      --accent-info:    #00aaff;
+      --accent-glow:    rgba(0,255,136,0.22);
+      --text-primary:   #e2f0e8;
+      --text-secondary: #7da392;
+      --text-muted:     #4a6b5e;
+      --border:         rgba(0,255,136,0.1);
+      --border-hover:   rgba(0,255,136,0.3);
+      --sidebar-w:      260px;
+      --font-display:   'Orbitron', monospace;
+      --font-body:      'Exo 2', system-ui, sans-serif;
+      --transition:     0.3s cubic-bezier(0.4,0,0.2,1);
+      --radius-sm:      8px;
+      --radius-md:      14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      overflow-x: hidden;
+    }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; font-family: inherit; }
+    img { display: block; max-width: 100%; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+    ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 3px; }
+
+    /* ══════════════════════════════
+       LOGIN SCREEN
+    ══════════════════════════════ */
+    #loginScreen {
+      position: fixed; inset: 0;
+      background: var(--bg-primary);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    .login-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 48px 40px;
+      width: 100%; max-width: 400px;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(0,255,136,0.08);
+    }
+    .login-logo {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    .login-logo span { color: var(--accent); }
+    .login-sub { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 32px; }
+    .login-field {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      padding: 12px 16px;
+      width: 100%;
+      margin-bottom: 14px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    .login-field:focus { border-color: var(--accent); }
+    .login-btn {
+      background: var(--accent);
+      color: #060e0c;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 13px;
+      width: 100%;
+      transition: background var(--transition), box-shadow var(--transition);
+    }
+    .login-btn:hover { background: #00ffaa; box-shadow: 0 0 20px var(--accent-glow); }
+    .login-error { color: var(--accent-danger); font-size: 0.8rem; margin-top: 12px; min-height: 18px; }
+
+    /* ══════════════════════════════
+       SIDEBAR
+    ══════════════════════════════ */
+    #sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      transition: transform var(--transition);
+    }
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo-text {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+    .sidebar-logo-text span { color: var(--accent); }
+    .sidebar-badge {
+      font-size: 0.65rem;
+      background: rgba(0,255,136,0.12);
+      color: var(--accent);
+      border-radius: 4px;
+      padding: 2px 7px;
+      margin-top: 6px;
+      display: inline-block;
+      letter-spacing: 1px;
+    }
+    .sidebar-nav { flex: 1; padding: 16px 12px; }
+    .sidebar-section-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 12px 10px 6px;
+    }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: background var(--transition), color var(--transition);
+      cursor: pointer;
+      margin-bottom: 2px;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .sidebar-link:hover { background: rgba(0,255,136,0.06); color: var(--text-primary); }
+    .sidebar-link.active {
+      background: rgba(0,255,136,0.1);
+      color: var(--accent);
+      border-left: 3px solid var(--accent);
+    }
+    .sidebar-link .link-icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-footer {
+      padding: 16px 12px;
+      border-top: 1px solid var(--border);
+    }
+    .sidebar-user {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+    }
+    .sidebar-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #00aaff);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; color: #060e0c;
+    }
+    .sidebar-user-info { flex: 1; }
+    .sidebar-user-name { font-size: 0.82rem; font-weight: 600; }
+    .sidebar-user-role { font-size: 0.7rem; color: var(--accent); }
+    .btn-logout {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; padding: 9px 14px;
+      background: rgba(255,68,102,0.08);
+      border: 1px solid rgba(255,68,102,0.2);
+      border-radius: var(--radius-sm);
+      color: var(--accent-danger);
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: background var(--transition);
+    }
+    .btn-logout:hover { background: rgba(255,68,102,0.15); }
+
+    /* ══════════════════════════════
+       MAIN CONTENT
+    ══════════════════════════════ */
+    #mainContent {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-height: 100vh;
+      padding: 32px;
+      display: none;
+    }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 32px;
+    }
+    .topbar-title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .topbar-search {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      padding: 9px 16px 9px 38px;
+      width: 220px;
+      outline: none;
+      position: relative;
+      transition: border-color var(--transition);
+    }
+    .topbar-search:focus { border-color: var(--accent); }
+    .search-wrap { position: relative; }
+    .search-wrap::before {
+      content: '⌕';
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); font-size: 1rem; pointer-events: none;
+    }
+
+    /* ── Views ── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ══════════════════════════════
+       DASHBOARD STATS
+    ══════════════════════════════ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 22px 24px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .stat-card:hover { border-color: var(--border-hover); box-shadow: 0 0 20px rgba(0,255,136,0.05); }
+    .stat-card::before {
+      content: '';
+      position: absolute; top: 0; right: 0;
+      width: 60px; height: 60px;
+      border-radius: 0 var(--radius-md) 0 60px;
+      opacity: 0.08;
+    }
+    .stat-card.green::before { background: var(--accent); }
+    .stat-card.red::before { background: var(--accent-danger); }
+    .stat-card.blue::before { background: var(--accent-info); }
+    .stat-card.yellow::before { background: var(--accent-warn); }
+    .stat-icon { font-size: 1.5rem; margin-bottom: 12px; }
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-card.green .stat-value { color: var(--accent); }
+    .stat-card.red .stat-value { color: var(--accent-danger); }
+    .stat-card.blue .stat-value { color: var(--accent-info); }
+    .stat-card.yellow .stat-value { color: var(--accent-warn); }
+    .stat-label-card { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ══════════════════════════════
+       GAMES TABLE
+    ══════════════════════════════ */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+    }
+    .section-header-title {
+      font-family: var(--font-display);
+      font-size: 1rem; font-weight: 700; letter-spacing: 1px;
+    }
+    .btn-add {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--accent);
+      color: #060e0c;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 10px 18px;
+      transition: background var(--transition), box-shadow var(--transition);
+    }
+    .btn-add:hover { background: #00ffaa; box-shadow: 0 0 20px var(--accent-glow); }
+    .table-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      padding: 13px 16px;
+      text-align: left;
+      font-family: var(--font-display);
+      font-size: 0.65rem;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    td {
+      padding: 13px 16px;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      border-bottom: 1px solid rgba(0,255,136,0.04);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(0,255,136,0.03); }
+    .td-img {
+      width: 52px; height: 36px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--bg-secondary);
+    }
+    .td-img-placeholder {
+      width: 52px; height: 36px;
+      border-radius: 6px;
+      background: var(--bg-secondary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .badge-genre {
+      background: rgba(0,255,136,0.1);
+      color: var(--accent);
+    }
+    .badge-new {
+      background: rgba(255,170,0,0.15);
+      color: var(--accent-warn);
+    }
+    .badge-no { background: rgba(255,68,102,0.1); color: var(--accent-danger); }
+    .stars { color: #ffd700; font-size: 0.8rem; }
+    .action-btns { display: flex; gap: 8px; }
+    .btn-edit, .btn-delete {
+      border: none;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      transition: opacity var(--transition);
+    }
+    .btn-edit {
+      background: rgba(0,170,255,0.15);
+      color: var(--accent-info);
+    }
+    .btn-edit:hover { background: rgba(0,170,255,0.25); }
+    .btn-delete {
+      background: rgba(255,68,102,0.12);
+      color: var(--accent-danger);
+    }
+    .btn-delete:hover { background: rgba(255,68,102,0.22); }
+    .table-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem; color: var(--text-muted);
+    }
+    .pagination { display: flex; gap: 6px; }
+    .pg-btn {
+      width: 30px; height: 30px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      transition: background var(--transition), color var(--transition);
+    }
+    .pg-btn:hover, .pg-btn.active {
+      background: rgba(0,255,136,0.1);
+      color: var(--accent);
+      border-color: var(--border-hover);
+    }
+
+    /* Filter bar */
+    .filter-bar {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .filter-select, .filter-input {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      padding: 8px 14px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    .filter-select:focus, .filter-input:focus { border-color: var(--accent); }
+    .filter-select option { background: var(--bg-card); }
+
+    /* ══════════════════════════════
+       MODAL / FORM
+    ══════════════════════════════ */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: none; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .overlay.active { display: flex; }
+    .modal-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-hover);
+      border-radius: var(--radius-md);
+      width: 100%; max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 0 60px rgba(0,255,136,0.12);
+      animation: modalIn 0.25s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 0.95rem; font-weight: 700; letter-spacing: 1px;
+    }
+    .modal-close-btn {
+      background: none; border: none;
+      color: var(--text-muted); font-size: 1.2rem;
+      transition: color var(--transition);
+    }
+    .modal-close-btn:hover { color: var(--accent-danger); }
+    .modal-body { padding: 24px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group.full { grid-column: 1/-1; }
+    .form-label {
+      display: block; font-size: 0.78rem;
+      color: var(--text-secondary); letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 7px;
+    }
+    .form-label .required { color: var(--accent-danger); margin-left: 3px; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,255,136,0.08);
+    }
+    .form-select option { background: var(--bg-card); }
+    .form-textarea { resize: vertical; min-height: 90px; }
+    .form-checkbox-wrap {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0;
+    }
+    .form-checkbox {
+      width: 18px; height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .form-checkbox-label { font-size: 0.88rem; color: var(--text-secondary); cursor: pointer; }
+    .form-hint { font-size: 0.73rem; color: var(--text-muted); margin-top: 5px; }
+    .form-error { font-size: 0.75rem; color: var(--accent-danger); margin-top: 5px; min-height: 16px; }
+    .img-preview-wrap { margin-top: 10px; }
+    .img-preview {
+      width: 120px; height: 76px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+    .modal-footer {
+      display: flex; justify-content: flex-end; gap: 10px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+    }
+    .btn-cancel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-family: var(--font-display);
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;
+      padding: 10px 20px;
+      transition: border-color var(--transition);
+    }
+    .btn-cancel:hover { border-color: var(--border-hover); }
+    .btn-save {
+      background: var(--accent);
+      color: #060e0c;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;
+      padding: 10px 24px;
+      transition: background var(--transition), box-shadow var(--transition);
+    }
+    .btn-save:hover { background: #00ffaa; box-shadow: 0 0 20px var(--accent-glow); }
+    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ══════════════════════════════
+       CONFIRM MODAL
+    ══════════════════════════════ */
+    .confirm-box {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,68,102,0.3);
+      border-radius: var(--radius-md);
+      width: 100%; max-width: 420px;
+      padding: 32px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(255,68,102,0.15);
+      animation: modalIn 0.2s ease;
+    }
+    .confirm-icon { font-size: 2.5rem; margin-bottom: 16px; }
+    .confirm-title {
+      font-family: var(--font-display);
+      font-size: 1rem; font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .confirm-msg { color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 24px; line-height: 1.5; }
+    .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+    .btn-confirm-del {
+      background: var(--accent-danger);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;
+      padding: 10px 22px;
+      transition: opacity var(--transition);
+    }
+    .btn-confirm-del:hover { opacity: 0.85; }
+
+    /* ══════════════════════════════
+       TOAST
+    ══════════════════════════════ */
+    #toastContainer {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      z-index: 9998;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .toast {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg-card);
+      border-radius: var(--radius-sm);
+      padding: 13px 18px;
+      font-size: 0.85rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      animation: toastIn 0.3s ease;
+      min-width: 260px; max-width: 360px;
+      border-left: 3px solid;
+    }
+    .toast.success { border-color: var(--accent); }
+    .toast.error   { border-color: var(--accent-danger); }
+    .toast.info    { border-color: var(--accent-info); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ══════════════════════════════
+       LOADING / EMPTY
+    ══════════════════════════════ */
+    .loading-row td {
+      text-align: center; padding: 40px;
+      color: var(--text-muted);
+    }
+    .empty-row td {
+      text-align: center; padding: 40px;
+      color: var(--text-muted);
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ══════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════ */
+    @media (max-width: 900px) {
+      #sidebar { transform: translateX(-100%); }
+      #sidebar.open { transform: translateX(0); }
+      #mainContent { margin-left: 0; padding: 20px; }
+      .form-row { grid-template-columns: 1fr; }
+      .hamburger-main {
+        display: flex; align-items: center; justify-content: center;
+        width: 38px; height: 38px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        color: var(--accent);
+        font-size: 1.2rem;
+      }
+    }
+    @media (min-width: 901px) {
+      .hamburger-main { display: none; }
+    }
+    .overlay-sidebar {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 99;
+      display: none;
+    }
+    .overlay-sidebar.active { display: block; }
+
+    /* ══════════════════════════════
+       RECENT ACTIVITY
+    ══════════════════════════════ */
+    .activity-list { display: flex; flex-direction: column; gap: 10px; }
+    .activity-item {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 0.83rem;
+    }
+    .activity-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .activity-dot.green { background: var(--accent); }
+    .activity-dot.red { background: var(--accent-danger); }
+    .activity-dot.blue { background: var(--accent-info); }
+    .activity-time { color: var(--text-muted); font-size: 0.75rem; margin-left: auto; }
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 700px) { .dashboard-grid { grid-template-columns: 1fr; } }
+    .panel-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+    }
+    .panel-card-title {
+      font-family: var(--font-display);
+      font-size: 0.75rem; letter-spacing: 1.5px; color: var(--text-muted);
+      text-transform: uppercase; margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">GAME<span>HUB</span></div>
+    <p class="login-sub">ADMIN PANEL — AUTHORIZED ACCESS ONLY</p>
+    <input type="email" id="loginEmail" class="login-field" placeholder="Email admin" />
+    <input type="password" id="loginPassword" class="login-field" placeholder="Password" />
+    <button class="login-btn" id="loginBtn">MASUK</button>
+    <p class="login-error" id="loginError"></p>
+  </div>
+</div>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-text">GAME<span>HUB</span></div>
+    <div class="sidebar-badge">⬡ ADMIN PANEL</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-section-label">Main</div>
+    <button class="sidebar-link active" data-view="dashboard">
+      <span class="link-icon">◈</span> Dashboard
+    </button>
+    <button class="sidebar-link" data-view="games">
+      <span class="link-icon">🎮</span> Kelola Game
+    </button>
+    <div class="sidebar-section-label" style="margin-top:8px;">Lainnya</div>
+    <a href="index.html" target="_blank" class="sidebar-link">
+      <span class="link-icon">↗</span> Lihat Website
+    </a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sidebarAvatar">A</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebarUserName">Admin</div>
+        <div class="sidebar-user-role">Super Admin</div>
+      </div>
+    </div>
+    <button class="btn-logout" id="logoutBtn">
+      <span>⏻</span> Logout
+    </button>
+  </div>
+</nav>
+
+<!-- Overlay sidebar mobile -->
+<div class="overlay-sidebar" id="overlaySidebar"></div>
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<main id="mainContent">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:16px;">
+      <button class="hamburger-main" id="hamburgerMain" aria-label="Toggle sidebar">☰</button>
+      <div class="topbar-title" id="viewTitle">Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <div class="search-wrap">
+        <input type="text" id="topbarSearch" class="topbar-search" placeholder="Cari game..." />
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── DASHBOARD VIEW ─── -->
+  <div class="view active" id="view-dashboard">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card green">
+        <div class="stat-icon">🎮</div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-label-card">Total Game</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-icon">✨</div>
+        <div class="stat-value" id="statNew">—</div>
+        <div class="stat-label-card">New Releases</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-value" id="statAvgRating">—</div>
+        <div class="stat-label-card">Rating Rata-rata</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon">🗡</div>
+        <div class="stat-value" id="statGenres">—</div>
+        <div class="stat-label-card">Genre Tersedia</div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="panel-card">
+        <div class="panel-card-title">Game dengan Rating Tertinggi</div>
+        <div id="topGames" class="activity-list">
+          <div style="color:var(--text-muted);font-size:0.8rem;">Memuat...</div>
+        </div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-card-title">Aktivitas Terakhir</div>
+        <div id="recentActivity" class="activity-list">
+          <div class="activity-item">
+            <span class="activity-dot blue"></span>
+            <span>Panel admin dimuat</span>
+            <span class="activity-time">Baru saja</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── GAMES VIEW ─── -->
+  <div class="view" id="view-games">
+    <div class="section-header">
+      <div class="section-header-title">📋 Daftar Semua Game</div>
+      <button class="btn-add" id="btnAddGame">＋ Tambah Game</button>
+    </div>
+
+    <div class="filter-bar">
+      <select class="filter-select" id="filterGenre">
+        <option value="">Semua Genre</option>
+        <option value="action">⚔ Action</option>
+        <option value="rpg">🗡 RPG</option>
+        <option value="horror">💀 Horror</option>
+        <option value="pixel">🎮 Pixel</option>
+        <option value="multiplayer">👥 Multiplayer</option>
+      </select>
+      <select class="filter-select" id="filterNew">
+        <option value="">Semua Status</option>
+        <option value="true">New Release</option>
+        <option value="false">Reguler</option>
+      </select>
+      <input type="text" class="filter-input" id="filterSearch" placeholder="Cari judul..." />
+    </div>
+
+    <div class="table-wrap">
+      <table id="gamesTable">
+        <thead>
+          <tr>
+            <th>IMG</th>
+            <th>TITLE</th>
+            <th>GENRE</th>
+            <th>RATING</th>
+            <th>NEW?</th>
+            <th>DEVELOPER</th>
+            <th>TAHUN</th>
+            <th>AKSI</th>
+          </tr>
+        </thead>
+        <tbody id="gamesTableBody">
+          <tr class="loading-row">
+            <td colspan="8"><div class="spinner"></div>Memuat data...</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="table-footer">
+        <span id="tableInfo">0 game</span>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════════════ FORM MODAL (Add/Edit) ═══════════════ -->
+<div class="overlay" id="formOverlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="formTitle">TAMBAH GAME BARU</div>
+      <button class="modal-close-btn" id="formClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="gameForm" autocomplete="off">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Judul Game <span class="required">*</span></label>
+            <input type="text" class="form-input" id="fTitle" placeholder="e.g. Elden Ring" />
+            <div class="form-error" id="errTitle"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Genre <span class="required">*</span></label>
+            <select class="form-select" id="fGenre">
+              <option value="">-- Pilih Genre --</option>
+              <option value="action">Action</option>
+              <option value="rpg">RPG</option>
+              <option value="horror">Horror</option>
+              <option value="pixel">Pixel</option>
+              <option value="multiplayer">Multiplayer</option>
+            </select>
+            <div class="form-error" id="errGenre"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Genre Label (tampilan)</label>
+            <input type="text" class="form-input" id="fGenreLabel" placeholder="e.g. Action RPG" />
+            <div class="form-hint">Teks yang tampil pada badge kartu</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rating (0–5)</label>
+            <input type="number" class="form-input" id="fRating" min="0" max="5" step="0.1" placeholder="4.5" />
+            <div class="form-error" id="errRating"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Developer</label>
+            <input type="text" class="form-input" id="fDeveloper" placeholder="FromSoftware" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tahun Rilis</label>
+            <input type="number" class="form-input" id="fYear" min="1970" max="2099" placeholder="2024" />
+          </div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">URL Gambar</label>
+          <input type="url" class="form-input" id="fImageUrl" placeholder="https://..." />
+          <div class="form-hint">Masukkan URL gambar thumbnail game</div>
+          <div class="img-preview-wrap" id="imgPreviewWrap" style="display:none;">
+            <img class="img-preview" id="imgPreviewEl" src="" alt="preview" />
+          </div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">URL Play</label>
+          <input type="url" class="form-input" id="fPlayUrl" placeholder="https://..." />
+          <div class="form-hint">Link untuk memainkan game (opsional)</div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Deskripsi</label>
+          <textarea class="form-textarea" id="fDescription" placeholder="Tulis deskripsi singkat game..."></textarea>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Tags (pisahkan koma)</label>
+          <input type="text" class="form-input" id="fTags" placeholder="open-world, souls-like, fantasy" />
+        </div>
+        <div class="form-group full">
+          <div class="form-checkbox-wrap">
+            <input type="checkbox" class="form-checkbox" id="fIsNew" />
+            <label class="form-checkbox-label" for="fIsNew">Tandai sebagai <strong>New Release</strong></label>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="formCancelBtn">Batal</button>
+      <button class="btn-save" id="formSaveBtn">SIMPAN</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CONFIRM DELETE MODAL ═══════════════ -->
+<div class="overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑</div>
+    <div class="confirm-title">Hapus Game?</div>
+    <p class="confirm-msg">Game <strong id="confirmGameName"></strong> akan dihapus secara permanen dari database. Tindakan ini tidak bisa dibatalkan.</p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" id="confirmCancelBtn">Batal</button>
+      <button class="btn-confirm-del" id="confirmDeleteBtn">Ya, Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TOAST ═══════════════ -->
+<div id="toastContainer"></div>
+
+<script>
+'use strict';
+
+// ── Supabase ─────────────────────────────────────────────
+const SUPABASE_URL = 'https://yytczccpjvbflinbogwe.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5dGN6Y2NwanZiZmxpbmJvZ3dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3NjYxMTksImV4cCI6MjA4NzM0MjExOX0.fJ3at2jQBXkLPnVcZcbPM5z7RIWsKk17qLY_B469tpQ';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── State ─────────────────────────────────────────────────
+let allGames = [];
+let editingId = null;
+let deletingId = null;
+let currentPage = 1;
+const ROWS_PER_PAGE = 10;
+let filterGenre = '';
+let filterNew = '';
+let filterSearch = '';
+let activityLog = [];
+
+// ══════════════════════════════
+// AUTH
+// ══════════════════════════════
+const loginScreen  = document.getElementById('loginScreen');
+const mainContent  = document.getElementById('mainContent');
+const sidebar      = document.getElementById('sidebar');
+
+async function checkSession() {
+  const { data: { session } } = await db.auth.getSession();
+  if (session) {
+    onLogin(session.user);
+  } else {
+    loginScreen.style.display = 'flex';
+  }
+}
+
+function onLogin(user) {
+  loginScreen.style.display = 'none';
+  mainContent.style.display = 'block';
+  // Set user info
+  const email = user.email || '';
+  document.getElementById('sidebarUserName').textContent = email.split('@')[0] || 'Admin';
+  document.getElementById('sidebarAvatar').textContent = (email[0] || 'A').toUpperCase();
+  fetchGames();
+}
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+
+  if (!email || !pass) { errEl.textContent = 'Email dan password harus diisi.'; return; }
+
+  const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
+  if (error) { errEl.textContent = '⚠ ' + error.message; return; }
+  onLogin(data.user);
+});
+
+document.getElementById('loginPassword').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('loginBtn').click();
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await db.auth.signOut();
+  location.reload();
+});
+
+// ══════════════════════════════
+// NAVIGATION
+// ══════════════════════════════
+document.querySelectorAll('.sidebar-link[data-view]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const view = btn.dataset.view;
+    switchView(view);
+    // close sidebar on mobile
+    sidebar.classList.remove('open');
+    document.getElementById('overlaySidebar').classList.remove('active');
+  });
+});
+
+function switchView(viewName) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.sidebar-link[data-view]').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + viewName)?.classList.add('active');
+  document.querySelector(`.sidebar-link[data-view="${viewName}"]`)?.classList.add('active');
+  const titles = { dashboard: 'Dashboard', games: 'Kelola Game' };
+  document.getElementById('viewTitle').textContent = titles[viewName] || viewName;
+}
+
+// Topbar search → switch to games view
+document.getElementById('topbarSearch').addEventListener('input', e => {
+  filterSearch = e.target.value.trim();
+  document.getElementById('filterSearch').value = filterSearch;
+  switchView('games');
+  currentPage = 1;
+  renderTable();
+});
+
+// Hamburger mobile
+document.getElementById('hamburgerMain').addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+  document.getElementById('overlaySidebar').classList.toggle('active');
+});
+document.getElementById('overlaySidebar').addEventListener('click', () => {
+  sidebar.classList.remove('open');
+  document.getElementById('overlaySidebar').classList.remove('active');
+});
+
+// ══════════════════════════════
+// FETCH DATA
+// ══════════════════════════════
+async function fetchGames() {
+  try {
+    const { data, error } = await db.from('games').select('*').order('id', { ascending: true });
+    if (error) throw error;
+    allGames = data || [];
+    renderDashboard();
+    renderTable();
+  } catch (err) {
+    showToast('Gagal memuat data: ' + err.message, 'error');
+  }
+}
+
+// ══════════════════════════════
+// DASHBOARD
+// ══════════════════════════════
+function renderDashboard() {
+  document.getElementById('statTotal').textContent = allGames.length;
+  document.getElementById('statNew').textContent   = allGames.filter(g => g.is_new).length;
+  const genres = new Set(allGames.map(g => g.genre).filter(Boolean));
+  document.getElementById('statGenres').textContent = genres.size;
+  const avg = allGames.length
+    ? (allGames.reduce((s, g) => s + (parseFloat(g.rating) || 0), 0) / allGames.length).toFixed(1)
+    : '—';
+  document.getElementById('statAvgRating').textContent = avg;
+
+  // Top rated
+  const top = [...allGames].sort((a, b) => (b.rating||0) - (a.rating||0)).slice(0, 5);
+  document.getElementById('topGames').innerHTML = top.length
+    ? top.map(g => `
+        <div class="activity-item">
+          <span class="activity-dot green"></span>
+          <span>${g.title || 'Untitled'}</span>
+          <span class="activity-time">⭐ ${g.rating || '—'}</span>
+        </div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:0.8rem;">Tidak ada data.</div>';
+}
+
+function logActivity(msg, type = 'blue') {
+  const now = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  activityLog.unshift({ msg, type, time: now });
+  if (activityLog.length > 8) activityLog.pop();
+  document.getElementById('recentActivity').innerHTML = activityLog.map(a => `
+    <div class="activity-item">
+      <span class="activity-dot ${a.type}"></span>
+      <span>${a.msg}</span>
+      <span class="activity-time">${a.time}</span>
+    </div>`).join('');
+}
+
+// ══════════════════════════════
+// TABLE RENDERING
+// ══════════════════════════════
+document.getElementById('filterGenre').addEventListener('change', e => { filterGenre = e.target.value; currentPage = 1; renderTable(); });
+document.getElementById('filterNew').addEventListener('change',   e => { filterNew   = e.target.value; currentPage = 1; renderTable(); });
+document.getElementById('filterSearch').addEventListener('input', e => { filterSearch = e.target.value.trim(); currentPage = 1; renderTable(); });
+
+function getFiltered() {
+  return allGames.filter(g => {
+    if (filterGenre && g.genre !== filterGenre) return false;
+    if (filterNew === 'true'  && !g.is_new)  return false;
+    if (filterNew === 'false' && g.is_new)   return false;
+    if (filterSearch) {
+      const q = filterSearch.toLowerCase();
+      if (!(g.title || '').toLowerCase().includes(q) &&
+          !(g.developer || '').toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function renderTable() {
+  const filtered = getFiltered();
+  const total    = filtered.length;
+  const pages    = Math.max(1, Math.ceil(total / ROWS_PER_PAGE));
+  if (currentPage > pages) currentPage = pages;
+  const start  = (currentPage - 1) * ROWS_PER_PAGE;
+  const paged  = filtered.slice(start, start + ROWS_PER_PAGE);
+
+  const tbody = document.getElementById('gamesTableBody');
+  if (!paged.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">🎮 Tidak ada game ditemukan.</td></tr>`;
+  } else {
+    tbody.innerHTML = paged.map(g => {
+      const imgHtml = g.image_url
+        ? `<img class="td-img" src="${g.image_url}" alt="${g.title}" onerror="this.style.display='none'">`
+        : `<div class="td-img-placeholder">🎮</div>`;
+      return `
+        <tr>
+          <td>${imgHtml}</td>
+          <td><strong>${g.title || '—'}</strong></td>
+          <td><span class="badge badge-genre">${g.genre_label || g.genre || '—'}</span></td>
+          <td><span class="stars">★</span> ${g.rating || '—'}</td>
+          <td>${g.is_new
+            ? '<span class="badge badge-new">NEW</span>'
+            : '<span class="badge badge-no">—</span>'}</td>
+          <td>${g.developer || '—'}</td>
+          <td>${g.year || '—'}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-edit"   data-id="${g.id}">✏ Edit</button>
+              <button class="btn-delete" data-id="${g.id}">🗑 Hapus</button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('tableInfo').textContent =
+    `${total} game${filterGenre || filterNew || filterSearch ? ' (difilter)' : ''}`;
+
+  // Pagination
+  const pgEl = document.getElementById('pagination');
+  let pgHtml = '';
+  for (let i = 1; i <= pages; i++) {
+    pgHtml += `<button class="pg-btn${i === currentPage ? ' active' : ''}" data-pg="${i}">${i}</button>`;
+  }
+  pgEl.innerHTML = pgHtml;
+  pgEl.querySelectorAll('.pg-btn').forEach(b => {
+    b.addEventListener('click', () => { currentPage = parseInt(b.dataset.pg); renderTable(); });
+  });
+}
+
+// Delegasi aksi tabel
+document.getElementById('gamesTableBody').addEventListener('click', e => {
+  const editBtn   = e.target.closest('.btn-edit');
+  const deleteBtn = e.target.closest('.btn-delete');
+  if (editBtn)   openEditModal(parseInt(editBtn.dataset.id));
+  if (deleteBtn) openConfirmDelete(parseInt(deleteBtn.dataset.id));
+});
+
+// ══════════════════════════════
+// IMAGE PREVIEW
+// ══════════════════════════════
+document.getElementById('fImageUrl').addEventListener('input', e => {
+  const url = e.target.value.trim();
+  const wrap = document.getElementById('imgPreviewWrap');
+  const img  = document.getElementById('imgPreviewEl');
+  if (url) {
+    wrap.style.display = 'block';
+    img.src = url;
+    img.onerror = () => { wrap.style.display = 'none'; };
+  } else {
+    wrap.style.display = 'none';
+  }
+});
+
+// ══════════════════════════════
+// ADD GAME
+// ══════════════════════════════
+document.getElementById('btnAddGame').addEventListener('click', () => {
+  editingId = null;
+  resetForm();
+  document.getElementById('formTitle').textContent = 'TAMBAH GAME BARU';
+  document.getElementById('formOverlay').classList.add('active');
+});
+
+// ══════════════════════════════
+// EDIT GAME
+// ══════════════════════════════
+function openEditModal(id) {
+  const game = allGames.find(g => g.id === id);
+  if (!game) return;
+  editingId = id;
+  resetForm();
+  document.getElementById('formTitle').textContent = 'EDIT GAME';
+
+  document.getElementById('fTitle').value      = game.title || '';
+  document.getElementById('fGenre').value      = game.genre || '';
+  document.getElementById('fGenreLabel').value = game.genre_label || '';
+  document.getElementById('fRating').value     = game.rating || '';
+  document.getElementById('fDeveloper').value  = game.developer || '';
+  document.getElementById('fYear').value       = game.year || '';
+  document.getElementById('fImageUrl').value   = game.image_url || '';
+  document.getElementById('fPlayUrl').value    = game.play_url || '';
+  document.getElementById('fDescription').value = game.description || '';
+  document.getElementById('fTags').value       = Array.isArray(game.tags) ? game.tags.join(', ') : (game.tags || '');
+  document.getElementById('fIsNew').checked    = !!game.is_new;
+
+  // trigger preview
+  if (game.image_url) {
+    document.getElementById('imgPreviewWrap').style.display = 'block';
+    document.getElementById('imgPreviewEl').src = game.image_url;
+  }
+  document.getElementById('formOverlay').classList.add('active');
+}
+
+// ══════════════════════════════
+// SAVE (Create / Update)
+// ══════════════════════════════
+document.getElementById('formSaveBtn').addEventListener('click', async () => {
+  if (!validateForm()) return;
+
+  const saveBtn = document.getElementById('formSaveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'MENYIMPAN...';
+
+  const tagsRaw = document.getElementById('fTags').value.trim();
+  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+  const payload = {
+    title:       document.getElementById('fTitle').value.trim(),
+    genre:       document.getElementById('fGenre').value,
+    genre_label: document.getElementById('fGenreLabel').value.trim() || document.getElementById('fGenre').value,
+    rating:      parseFloat(document.getElementById('fRating').value) || null,
+    developer:   document.getElementById('fDeveloper').value.trim() || null,
+    year:        parseInt(document.getElementById('fYear').value) || null,
+    image_url:   document.getElementById('fImageUrl').value.trim() || null,
+    play_url:    document.getElementById('fPlayUrl').value.trim() || null,
+    description: document.getElementById('fDescription').value.trim() || null,
+    tags:        tags.length ? tags : null,
+    is_new:      document.getElementById('fIsNew').checked,
+  };
+
+  try {
+    if (editingId) {
+      // UPDATE
+      const { error } = await db.from('games').update(payload).eq('id', editingId);
+      if (error) throw error;
+      // Update local state
+      const idx = allGames.findIndex(g => g.id === editingId);
+      if (idx !== -1) allGames[idx] = { ...allGames[idx], ...payload };
+      showToast(`✅ Game "${payload.title}" berhasil diperbarui!`, 'success');
+      logActivity(`Edit game: ${payload.title}`, 'blue');
+    } else {
+      // INSERT
+      const { data, error } = await db.from('games').insert([payload]).select().single();
+      if (error) throw error;
+      allGames.push(data);
+      showToast(`✅ Game "${payload.title}" berhasil ditambahkan!`, 'success');
+      logActivity(`Tambah game: ${payload.title}`, 'green');
+    }
+    renderDashboard();
+    renderTable();
+    closeFormModal();
+  } catch (err) {
+    showToast('⚠ Error: ' + err.message, 'error');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'SIMPAN';
+  }
+});
+
+// ══════════════════════════════
+// DELETE
+// ══════════════════════════════
+function openConfirmDelete(id) {
+  deletingId = id;
+  const game = allGames.find(g => g.id === id);
+  document.getElementById('confirmGameName').textContent = game?.title || `ID ${id}`;
+  document.getElementById('confirmOverlay').classList.add('active');
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+  if (!deletingId) return;
+  const game = allGames.find(g => g.id === deletingId);
+  try {
+    const { error } = await db.from('games').delete().eq('id', deletingId);
+    if (error) throw error;
+    allGames = allGames.filter(g => g.id !== deletingId);
+    showToast(`🗑 Game "${game?.title}" telah dihapus.`, 'info');
+    logActivity(`Hapus game: ${game?.title}`, 'red');
+    renderDashboard();
+    renderTable();
+  } catch (err) {
+    showToast('⚠ Gagal menghapus: ' + err.message, 'error');
+  } finally {
+    document.getElementById('confirmOverlay').classList.remove('active');
+    deletingId = null;
+  }
+});
+
+document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+  document.getElementById('confirmOverlay').classList.remove('active');
+  deletingId = null;
+});
+
+// ══════════════════════════════
+// VALIDATION
+// ══════════════════════════════
+function validateForm() {
+  let valid = true;
+  const clear = id => document.getElementById(id).textContent = '';
+  const err   = (id, msg) => { document.getElementById(id).textContent = msg; valid = false; };
+
+  clear('errTitle'); clear('errGenre'); clear('errRating');
+
+  if (!document.getElementById('fTitle').value.trim())
+    err('errTitle', 'Judul wajib diisi.');
+  if (!document.getElementById('fGenre').value)
+    err('errGenre', 'Genre wajib dipilih.');
+  const r = document.getElementById('fRating').value;
+  if (r !== '' && (isNaN(r) || +r < 0 || +r > 5))
+    err('errRating', 'Rating harus antara 0 – 5.');
+
+  return valid;
+}
+
+// ══════════════════════════════
+// FORM HELPERS
+// ══════════════════════════════
+function resetForm() {
+  document.getElementById('gameForm').reset();
+  document.getElementById('imgPreviewWrap').style.display = 'none';
+  ['errTitle','errGenre','errRating'].forEach(id => document.getElementById(id).textContent = '');
+}
+
+function closeFormModal() {
+  document.getElementById('formOverlay').classList.remove('active');
+  editingId = null;
+}
+
+document.getElementById('formClose').addEventListener('click', closeFormModal);
+document.getElementById('formCancelBtn').addEventListener('click', closeFormModal);
+document.getElementById('formOverlay').addEventListener('click', e => {
+  if (e.target.id === 'formOverlay') closeFormModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeFormModal();
+    document.getElementById('confirmOverlay').classList.remove('active');
+  }
+});
+
+// ══════════════════════════════
+// TOAST
+// ══════════════════════════════
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const icons = { success: '✅', error: '⚠', info: 'ℹ' };
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span>${icons[type] || 'ℹ'}</span><span>${msg}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+// ══════════════════════════════
+// INIT
+// ══════════════════════════════
+checkSession();
+</script>
+</body>
+</html>
